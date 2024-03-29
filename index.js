@@ -1,22 +1,31 @@
-const express = require('express'); // Importing express module
+const express = require('express');
 const db = require('./config/connection'); // Importing database connection
 const routes = require('./routes'); // Importing routes
+const helmet = require('helmet'); // Importing Helmet for HTTP headers security
+const compression = require('compression'); // Importing Compression for response compression
 
-const cwd = process.cwd(); // Getting current working directory
+const PORT = process.env.PORT || 3001; // Setting the port for the server
+const app = express(); // Creating an Express application instance
 
-const PORT = process.env.PORT || 3001; // Setting up port, defaulting to 3001
-const app = express(); // Creating express application
+// Middleware setup
+app.use(express.urlencoded({ extended: true })); // Parsing URL-encoded bodies
+app.use(express.json()); // Parsing JSON bodies
+app.use(helmet()); // Applying Helmet middleware for HTTP security headers
+app.use(compression()); // Applying Compression middleware for response compression
 
-// Middleware for parsing incoming requests with urlencoded and json payloads
-app.use(express.urlencoded({ extended: true }));
-app.use(express.json());
+// Mounting routes
+app.use(routes); // Mounting routes defined in the 'routes' module
 
-// Using routes defined in the routes module
-app.use(routes);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack); // Logging the error stack
+  res.status(500).send('Internal Server Error'); // Sending a 500 Internal Server Error response
+});
 
-// Once the database connection is open, start the server
+// Event listener for when the database connection is opened
 db.once('open', () => {
+  // Starting the Express server
   app.listen(PORT, () => {
-    console.log(`Now running on port ${PORT}!`); // Logging server running message
+    console.log(`Server running on port ${PORT}`); // Logging that the server is running and on which port
   });
 });

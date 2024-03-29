@@ -1,9 +1,13 @@
-const router = require('express').Router(); // Importing Router from express
+const router = require('express').Router(); // Importing Express Router
 const apiRoutes = require('./api'); // Importing API routes
 
-router.use('/api', apiRoutes); // Using the API routes under the '/api' endpoint
+// Mount API routes
+router.use('/api', apiRoutes);
 
-// Handling invalid routes with a default message
-router.use((req, res) => res.send('Wrong route!'));
+// Handle unmatched routes with a 404 error
+router.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
 
-module.exports = router; // Exporting the router for use in other modules
+// Export the router module
+module.exports = router;

@@ -1,108 +1,102 @@
-// Importing necessary modules and models
-const { ObjectId } = require('mongoose').Types; // ObjectId from mongoose Types
-const { User, Thought } = require('../models'); // Importing User and Thought models
+const { Types } = require('mongoose'); // Accessing ObjectId type from Mongoose
+const { User, Thought } = require('../models'); // Importing models for User and Thought
 
-// Exporting an object with controller methods
 module.exports = {
-
-  // Controller method to get all users
+  // Get all users
   async getUsers(req, res) {
     try {
-      const users = await User.find(); // Finding all users
-      res.json(users); // Sending JSON response with users
+      const users = await User.find();
+      res.json(users);
     } catch (err) {
-      console.error(err); // Logging error
-      return res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to get a single user by ID
+  // Get a single user by ID
   async getSingleUser(req, res) {
     try {
-      const user = await User.findOne({ _id: req.params.userId }).select('-__v'); // Finding user by ID and excluding '__v' field
-      user ? res.json(user) : res.status(404).json({ message: 'No user found with that ID' }); // Sending user if found, else sending 404 with error message
+      const user = await User.findById(req.params.userId).select('-__v');
+      user ? res.json(user) : res.status(404).json({ message: 'No user found with that ID' });
     } catch (err) {
-      console.error(err); // Logging error
-      return res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to create a new user
+  // Create a new user
   async createUser(req, res) {
     try {
-      const user = await User.create(req.body); // Creating a new user
-      res.json(user); // Sending JSON response with new user
+      const user = await User.create(req.body);
+      res.json(user);
     } catch (err) {
-      console.error(err); // Logging error
-      res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to update a user by ID
+  // Update a user by ID
   async updateUser(req, res) {
     try {
-      const user = await User.findOneAndUpdate(
-        { _id: req.params.userId }, // Finding user by ID
-        { $set: req.body }, // Updating user fields
-        { runValidators: true, new: true } // Running validators and returning updated document
-      );
-      user ? res.json(user) : res.status(404).json({ message: 'No user found with that ID' }); // Sending updated user if found, else sending 404 with error message
+      const user = await User.findByIdAndUpdate(req.params.userId, req.body, {
+        runValidators: true,
+        new: true
+      });
+      user ? res.json(user) : res.status(404).json({ message: 'No user found with that ID' });
     } catch (err) {
-      console.error(err); // Logging error
-      res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to delete a user by ID
+  // Delete a user by ID
   async deleteUser(req, res) {
     try {
-      const deletedUser = await User.findOneAndDelete({ _id: req.params.userId }); // Finding and deleting user by ID
+      const deletedUser = await User.findByIdAndDelete(req.params.userId);
       if (!deletedUser) {
-        return res.status(404).json({ message: 'No such user exists' }); // Sending 404 with error message if user not found
+        return res.status(404).json({ message: 'No such user exists' });
       }
-      await Thought.deleteMany({ username: deletedUser.username }); // Deleting all thoughts associated with the deleted user
-      res.status(200).json({ // Sending success message with deleted user
+      await Thought.deleteMany({ username: deletedUser.username });
+      res.status(200).json({
         message: 'User and associated thoughts deleted successfully',
         deletedUser
       });
     } catch (err) {
-      console.error(err); // Logging error
-      res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to add a friend to a user's friendlist
+  // Add a friend to a user's friend list
   async addFriend(req, res) {
     try {
-      const user = await User.findOneAndUpdate(
-        { _id: req.params.userId }, // Finding user by ID
-        { $addToSet: { friends: req.body.friendId || req.params.friendId } }, // Adding friend to friends array
-        { new: true } // Returning updated document
+      const user = await User.findByIdAndUpdate(
+        req.params.userId,
+        { $addToSet: { friends: req.body.friendId || req.params.friendId } },
+        { new: true }
       );
-      user ? res.status(200).json(user) : res.status(404).json({ message: 'No such user exists' }); // Sending updated user if found, else sending 404 with error message
+      user ? res.status(200).json(user) : res.status(404).json({ message: 'No such user exists' });
     } catch (err) {
-      console.error(err); // Logging error
-      res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to remove a friend from a user's friendlist
+  // Remove a friend from a user's friend list
   async removeFriend(req, res) {
     try {
-      const user = await User.findOneAndUpdate(
-        { _id: req.params.userId }, // Finding user by ID
-        { $pull: { friends: req.params.friendId } }, // Removing friend from friends array
-        { new: true } // Returning updated document
+      const user = await User.findByIdAndUpdate(
+        req.params.userId,
+        { $pull: { friends: req.params.friendId } },
+        { new: true }
       );
       if (!user) {
-        return res.status(404).json({ message: 'No such user exists' }); // Sending 404 with error message if user not found
+        return res.status(404).json({ message: 'No such user exists' });
       }
-      const friendRemoved = !user.friends.includes(req.params.friendId); // Checking if friend is successfully removed
-      friendRemoved ? res.status(200).json({ message: 'Friend removed from friendlist', user }) : res.json({ message: 'Something went wrong' }); // Sending success message if friend removed, else sending generic message
+      const friendRemoved = !user.friends.includes(req.params.friendId);
+      friendRemoved ? res.status(200).json({ message: 'Friend removed from friend list', user }) : res.json({ message: 'Something went wrong' });
     } catch (err) {
-      console.error(err); // Logging error
-      res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   }
-
 };
+
+// Function to handle server errors
+function handleServerError(res, err) {
+  console.error(err);
+  res.status(500).json(err);
+}

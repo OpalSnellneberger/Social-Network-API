@@ -1,53 +1,54 @@
-// Importing necessary components from the mongoose library. 
-// Schema is used to define the structure of the document, 
-// model is used to create a model based on a schema, 
-// and Types provides access to Mongoose's ObjectId data type.
-const { Schema, model, Types } = require('mongoose');
+const { Schema, model } = require('mongoose');
 
-// User Schema definition
+// Define the user schema
 const userSchema = new Schema(
   {
-    username: { // Username field
-      type: String, // Data type for username
+    // Username of the user
+    username: {
+      type: String, // Data type is string
       unique: true, // Username must be unique
       required: true, // Username is required
-      trim: true, // Trimming whitespace from username
+      trim: true, // Trim whitespace from the username
+      // Additional validation can be added here (e.g., minlength, maxlength, match)
     },
-    email: { // Email field
-      type: String, // Data type for email
+    // Email of the user
+    email: {
+      type: String, // Data type is string
       required: true, // Email is required
       unique: true, // Email must be unique
-      match: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, // Regex pattern for email validation
+      // Email format validation using regex
+      match: /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
     },
-    thoughts: [ // Array of ObjectId values referencing Thought model
+    // Array of thought IDs associated with the user
+    thoughts: [
       {
-        type: Schema.Types.ObjectId, // Data type for thoughts array
+        type: Schema.Types.ObjectId, // MongoDB ObjectId type
         ref: 'Thought', // Reference to the Thought model
       },
     ],
-    friends: [ // Array of ObjectId values referencing User model (for friends)
+    // Array of user IDs representing friends of the user
+    friends: [
       {
-        type: Schema.Types.ObjectId, // Data type for friends array
+        type: Schema.Types.ObjectId, // MongoDB ObjectId type
         ref: 'User', // Reference to the User model
       },
     ],
   },
   {
-    toJSON: { virtuals: true }, // Enables virtuals to be included when converting document to JSON
-    id: false, // Disables inclusion of the default _id field in the document
-  },
+    // Ensure that virtuals are enabled when converting to JSON
+    toJSON: { virtuals: true },
+    // Exclude the "_id" field from the schema
+    id: false,
+  }
 );
 
-// Define a virtual property called friendCount. 
-// A virtual property is not stored in the MongoDB collection but can be calculated or derived when querying the document. 
-// In this case, it calculates the length of the friends array.
+// Define a virtual property to calculate the number of friends the user has
 userSchema.virtual('friendCount').get(function () {
-  return this.friends.length; // Returning the length of the friends array
+  return this.friends.length; // Return the length of the friends array
 });
 
-// Create a Mongoose model named User based on the defined schema (userSchema). 
-// The first parameter is the singular name of the collection that will be created in MongoDB, and the second parameter is the schema.
-const User = model('user', userSchema);
+// Create a model based on the user schema
+const User = model('User', userSchema);
 
-// Export the User model so that it can be used in other parts of the application
+// Export the User model
 module.exports = User;

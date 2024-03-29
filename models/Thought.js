@@ -1,37 +1,47 @@
-const { Schema, model } = require('mongoose'); // Importing necessary modules from mongoose
+const { Schema, model } = require('mongoose');
 const reactionSchema = require('./Reaction'); // Importing the reaction schema
 
-// Defining the thought schema
+// Define the thought schema
 const thoughtSchema = new Schema(
   {
-    thoughtText: { // Text content of the thought
-      type: String, // Data type for the thought text
+    // Text content of the thought
+    thoughtText: {
+      type: String, // Data type is string
       required: true, // Thought text is required
-      minlength: 1, // Minimum length of the thought text
-      maxlength: 280, // Maximum length of the thought text
+      minlength: 1, // Minimum length of thought text is 1 character
+      maxlength: 280, // Maximum length of thought text is 280 characters
     },
-    createdAt: { // Timestamp for when the thought was created
-      type: Date, // Data type for the timestamp
-      default: Date.now, // Default value is the current timestamp
-      get: timestamp => new Date(timestamp).toLocaleString(), // Custom getter to format the timestamp
+    // Date and time when the thought was created
+    createdAt: {
+      type: Date, // Data type is date
+      default: Date.now, // Default value is the current date and time
+      // Convert the timestamp to a localized string format
+      get: timestamp => new Date(timestamp).toLocaleString(),
     },
-    username: { // Username of the user who created the thought
-      type: String, // Data type for the username
+    // Username of the user who created the thought
+    username: {
+      type: String, // Data type is string
       required: true, // Username is required
+      // Additional validation can be added here (e.g., minlength, maxlength, match)
     },
-    reactions: [reactionSchema], // Array of reactions associated with the thought
+    // Array of reactions associated with the thought, referencing the reaction schema
+    reactions: [reactionSchema], // Using the reaction schema to define the structure of reactions array
   },
   {
-    toJSON: { getters: true, virtuals: true }, // Adding getters and virtuals to JSON output
-    id: false, // Excluding the '_id' field from the schema
-  },
+    // Ensure that getters and virtuals are enabled when converting to JSON
+    toJSON: { getters: true, virtuals: true },
+    // Exclude the "_id" field from the schema
+    id: false,
+  }
 );
 
-// Defining a virtual property to get the count of reactions for a thought
+// Define a virtual property to calculate the number of reactions associated with the thought
 thoughtSchema.virtual('reactionCount').get(function () {
-  return this.reactions.length; // Returning the length of the reactions array
+  return this.reactions.length; // Return the length of the reactions array
 });
 
-const Thought = model('thought', thoughtSchema); // Creating a model from the thought schema
+// Create a model based on the thought schema
+const Thought = model('Thought', thoughtSchema);
 
-module.exports = Thought; // Exporting the Thought model for use in other modules
+// Export the Thought model
+module.exports = Thought;

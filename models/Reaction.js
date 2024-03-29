@@ -1,31 +1,39 @@
-const { Schema, Types } = require('mongoose'); // Importing necessary modules from mongoose
+const { Schema, Types } = require('mongoose');
 
-// Defining the reaction schema
+// Define the reaction schema
 const reactionSchema = new Schema(
   {
-    reactionId: { // Unique identifier for the reaction
-      type: Schema.Types.ObjectId, // Data type for the ID
-      default: () => new Types.ObjectId(), // Generating a new ObjectId by default
+    // Unique identifier for the reaction
+    reactionId: {
+      type: Schema.Types.ObjectId, // MongoDB ObjectId type
+      default: () => new Types.ObjectId(), // Default value is a new ObjectId
     },
-    reactionBody: { // Body of the reaction
-      type: String, // Data type for the reaction body
+    // Content of the reaction
+    reactionBody: {
+      type: String, // Data type is string
       required: true, // Reaction body is required
-      maxlength: 280, // Maximum length of the reaction body
+      maxlength: 280, // Maximum length of reaction body is 280 characters
     },
-    username: { // Username of the user who made the reaction
-      type: String, // Data type for the username
+    // Username of the user who created the reaction
+    username: {
+      type: String, // Data type is string
       required: true, // Username is required
     },
-    createdAt: { // Timestamp for when the reaction was created
-      type: Date, // Data type for the timestamp
-      default: Date.now, // Default value is the current timestamp
-      get: timestamp => new Date(timestamp).toLocaleString(), // Custom getter to format the timestamp
+    // Date and time when the reaction was created
+    createdAt: {
+      type: Date, // Data type is date
+      default: Date.now, // Default value is the current date and time
+      // Convert the timestamp to a localized string format
+      get: timestamp => new Date(timestamp).toLocaleString(),
     },
   },
   {
-    toJSON: { getters: true }, // Adding getters to JSON output
-    id: false, // Excluding the '_id' field from the schema
+    // Ensure that getters are enabled when converting to JSON
+    toJSON: { getters: true },
+    // Exclude the "_id" field from the schema
+    id: false,
   }
 );
 
-module.exports = reactionSchema; // Exporting the reaction schema for use in other modules
+// Export the reaction schema
+module.exports = reactionSchema;

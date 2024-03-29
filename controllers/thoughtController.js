@@ -1,102 +1,96 @@
-// Importing necessary modules and models
-const { ObjectId } = require('mongoose').Types; // ObjectId from mongoose Types
-const { User, Thought, Reaction } = require('../models'); // Importing User, Thought, and Reaction models
+const { Types } = require('mongoose'); // Accessing ObjectId type from Mongoose
+const { User, Thought } = require('../models'); // Importing models for User and Thought
 
-// Exporting an object with controller methods
 module.exports = {
-
-  // Controller method to get all thoughts
+  // Retrieve all thoughts
   async getThoughts(req, res) {
     try {
-      const thoughts = await Thought.find(); // Finding all thoughts
-      res.json(thoughts); // Sending JSON response with thoughts
+      const thoughts = await Thought.find();
+      res.json(thoughts);
     } catch (err) {
-      console.error(err); // Logging error
-      return res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to get a single thought by ID
+  // Retrieve a single thought by its ID
   async getSingleThought(req, res) {
     try {
-      const thought = await Thought.findOne({ _id: req.params.thoughtId }).select('-__v'); // Finding thought by ID and excluding '__v' field
-      thought ? res.json(thought) : res.status(404).json({ message: 'No thought found with that ID' }); // Sending thought if found, else sending 404 with error message
+      const thought = await Thought.findById(req.params.thoughtId).select('-__v');
+      thought ? res.json(thought) : res.status(404).json({ message: 'No thought found with that ID' });
     } catch (err) {
-      console.error(err); // Logging error
-      return res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to create a new thought
+  // Create a new thought
   async createThought(req, res) {
     try {
-      const thought = await Thought.create(req.body); // Creating a new thought
+      const thought = await Thought.create(req.body);
       const updatedUser = await User.findOneAndUpdate(
-        { username: req.body.username }, // Finding associated user by username
-        { $push: { thoughts: thought._id } }, // Pushing thought ID to user's thoughts array
-        { new: true } // Returning updated user
+        { username: req.body.username },
+        { $push: { thoughts: thought._id } },
+        { new: true }
       );
-      updatedUser ? res.json(thought) : res.status(404).json({ message: 'Associated user not found' }); // Sending thought if user found, else sending 404 with error message
+      updatedUser ? res.json(thought) : res.status(404).json({ message: 'Associated user not found' });
     } catch (err) {
-      console.error(err); // Logging error
-      res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to update a thought by ID
+  // Update a thought by its ID
   async updateThought(req, res) {
     try {
-      const thought = await Thought.findOneAndUpdate(
-        { _id: req.params.thoughtId }, // Finding thought by ID
-        { $set: req.body }, // Updating thought fields
-        { runValidators: true, new: true } // Running validators and returning updated document
-      );
-      thought ? res.json(thought) : res.status(404).json({ message: 'No such thought exists!' }); // Sending updated thought if found, else sending 404 with error message
+      const thought = await Thought.findByIdAndUpdate(req.params.thoughtId, req.body, {
+        runValidators: true,
+        new: true
+      });
+      thought ? res.json(thought) : res.status(404).json({ message: 'No such thought exists!' });
     } catch (err) {
-      console.error(err); // Logging error
-      res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to delete a thought by ID
+  // Delete a thought by its ID
   async deleteThought(req, res) {
     try {
-      const deletedThought = await Thought.findOneAndDelete({ _id: req.params.thoughtId }); // Finding and deleting thought by ID
-      deletedThought ? res.status(200).json({ message: 'Thought deleted successfully', deletedThought }) : res.status(404).json({ message: 'No such thought exists' }); // Sending success message if thought deleted, else sending 404 with error message
+      const deletedThought = await Thought.findByIdAndDelete(req.params.thoughtId);
+      deletedThought ? res.status(200).json({ message: 'Thought deleted successfully', deletedThought }) : res.status(404).json({ message: 'No such thought exists' });
     } catch (err) {
-      console.error(err); // Logging error
-      res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to create a new reaction for a thought
+  // Add a reaction to a thought by its ID
   async createReaction(req, res) {
     try {
-      const thought = await Thought.findOneAndUpdate(
-        { _id: req.params.thoughtId }, // Finding thought by ID
-        { $addToSet: { reactions: req.body } }, // Adding new reaction to reactions array
-        { runValidators: true, new: true } // Running validators and returning updated document
+      const thought = await Thought.findByIdAndUpdate(
+        req.params.thoughtId,
+        { $addToSet: { reactions: req.body } },
+        { runValidators: true, new: true }
       );
-      thought ? res.status(200).json(thought) : res.status(404).json({ message: 'No such thought exists' }); // Sending updated thought if found, else sending 404 with error message
+      thought ? res.status(200).json(thought) : res.status(404).json({ message: 'No such thought exists' });
     } catch (err) {
-      console.error(err); // Logging error
-      res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   },
 
-  // Controller method to delete a reaction from a thought
+  // Delete a reaction from a thought by its ID and reaction ID
   async deleteReaction(req, res) {
     try {
-      const thought = await Thought.findOneAndUpdate(
-        { _id: req.params.thoughtId }, // Finding thought by ID
-        { $pull: { reactions: { reactionId: req.params.reactionId } } }, // Pulling specific reaction from reactions array
-        { runValidators: true, new: true } // Running validators and returning updated document
+      const thought = await Thought.findByIdAndUpdate(
+        req.params.thoughtId,
+        { $pull: { reactions: { reactionId: req.params.reactionId } } },
+        { runValidators: true, new: true }
       );
-      thought ? res.status(200).json(thought) : res.status(404).json({ message: 'No such thought exists' }); // Sending updated thought if found, else sending 404 with error message
+      thought ? res.status(200).json(thought) : res.status(404).json({ message: 'No such thought exists' });
     } catch (err) {
-      console.error(err); // Logging error
-      res.status(500).json(err); // Sending 500 status with error JSON response
+      handleServerError(res, err);
     }
   }
-
 };
+
+// Function to handle server errors
+function handleServerError(res, err) {
+  console.error(err);
+  res.status(500).json(err);
+}

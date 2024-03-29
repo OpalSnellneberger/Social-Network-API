@@ -1,37 +1,35 @@
-// Importing necessary modules from the mongoose package
-const { connect, connection } = require('mongoose');
+const mongoose = require('mongoose');
 
-// MongoDB connection string
-const connectionString = 'mongodb://localhost/my_database';
+// Define the connection string to MongoDB
+const connectionString = 'mongodb://localhost:27017/mydatabase'; // Example connection string
 
-// Establishing connection to MongoDB database using mongoose
-connect(connectionString, { 
-  useNewUrlParser: true, // Option to use the new parser for URL parsing
-  useUnifiedTopology: true // Option to use the new Server Discovery and Monitoring engine
-});
+// Options for mongoose connection
+const options = {
+  useNewUrlParser: true, // Parse connection string using new URL parser
+  useUnifiedTopology: true // Use new Server Discovery and Monitoring engine
+};
 
-// Event listener for successful connection
-connection.on('connected', () => {
-  console.log(`Mongoose connected to ${connectionString}`); // Logging successful connection message
-});
+// Connect to MongoDB using mongoose
+mongoose.connect(connectionString, options)
+  .then(() => console.log(`Mongoose connected to ${connectionString}`))
+  .catch(err => console.error(`Mongoose connection error: ${err}`));
 
-// Event listener for connection error
-connection.on('error', (err) => {
-  console.error(`Mongoose connection error: ${err}`); // Logging connection error message
-});
-
-// Event listener for disconnection
-connection.on('disconnected', () => {
-  console.log('Mongoose disconnected'); // Logging disconnection message
+// Event listener for when MongoDB connection is disconnected
+mongoose.connection.on('disconnected', () => {
+  console.log('Mongoose disconnected');
 });
 
 // Event listener for SIGINT signal (Ctrl+C) to gracefully close the connection
-process.on('SIGINT', () => {
-  connection.close(() => {
-    console.log('Mongoose connection closed through app termination'); // Logging closure message
-    process.exit(0); // Exiting the Node.js process with status code 0
-  });
+process.on('SIGINT', async () => {
+  try {
+    await mongoose.connection.close();
+    console.log('Mongoose connection closed through app termination');
+    process.exit(0); // Exit with success
+  } catch (error) {
+    console.error('Error closing Mongoose connection:', error);
+    process.exit(1); // Exit with failure
+  }
 });
 
-// Exporting the connection object for external usage if needed
-module.exports = connection;
+// Export the mongoose connection object
+module.exports = mongoose.connection;
